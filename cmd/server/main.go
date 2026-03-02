@@ -18,6 +18,8 @@ import (
 	"Haruki-Command-Parser/internal/parser"
 
 	sekai "haruki-cloud/database/sekai"
+
+	_ "github.com/lib/pq"
 )
 
 // ParseRequest is the request body accepted by POST /api/parse and POST /api/process.
