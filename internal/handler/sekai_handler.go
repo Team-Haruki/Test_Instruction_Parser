@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"Haruki-Command-Parser/internal/parser"
 	sekairegion "Haruki-Command-Parser/internal/sekai_region"
 	"fmt"
 	"slices"
@@ -13,6 +14,20 @@ type SekaiHandlerContext struct {
 	originalTriggerCmd string                   // 原始触发命令，未去除区服前缀
 	prefixArg          string                   // 额外前缀
 	uidArg             string                   // UID参数 /u / uid / @
+	flags              map[string]bool          // -verbose, -preview, -help 等开关
+}
+
+func (s *SekaiHandlerContext) Region() *sekairegion.SekaiRegion {
+	return s.region
+}
+func (s *SekaiHandlerContext) PrefixArg() string {
+	return s.prefixArg
+}
+func (s *SekaiHandlerContext) Flags() map[string]bool {
+	return s.flags
+}
+func (s *SekaiHandlerContext) SetArgs(args string) {
+	s.argText = args
 }
 
 type SekaiCommandHandler struct {
@@ -58,8 +73,33 @@ func (skh *SekaiCommandHandler) Handle(ctx Context) (interface{}, error) {
 	if cmdRegion == nil && len(skh.regions) > 0 {
 		cmdRegion = skh.regions[0]
 	}
-	// TODO: 处理账号参数等
+	// TODO: 测试时处理账号参数等
 	args := ctx.GetArgs()
+
+	// 提取通用 flags 和 region flag (不需要 nicknames 也能提取这些)
+	ext := parser.NewExtractor(nil)
+	flags := make(map[string]bool)
+
+	regRes := ext.ExtractRegion(args)
+	if regRes.Value != "" {
+		if r := sekairegion.GetRegionById(regRes.Value); r != nil {
+			cmdRegion = r
+		}
+	}
+	args = regRes.Remaining
+
+	verbRes := ext.ExtractVerbose(args)
+	flags["is_verbose"] = verbRes.Value
+	args = verbRes.Remaining
+
+	preRes := ext.ExtractPreview(args)
+	flags["is_preview"] = preRes.Value
+	args = preRes.Remaining
+
+	helpRes := ext.ExtractHelp(args)
+	flags["is_help"] = helpRes.Value
+	args = helpRes.Remaining
+
 	skCtx := &SekaiHandlerContext{
 		HandlerContext: HandlerContext{
 			Context:     ctx,
@@ -82,6 +122,7 @@ func (skh *SekaiCommandHandler) Handle(ctx Context) (interface{}, error) {
 	skCtx.originalTriggerCmd = originalTriggerCmd
 	skCtx.prefixArg = prefixArg
 	skCtx.argText = args
+	skCtx.flags = flags
 	return skh.handleFunc(*skCtx)
 }
 
