@@ -10,6 +10,8 @@ import (
 func TestRegisterCommandHandler(t *testing.T) {
 
 	RegisterSekaiCommandHandler()
+
+	handler.PrintTree()
 	v, e := handler.Dispatch(context.Background(), handler.Event{
 		Message: "/cn查谱面 虾",
 	})

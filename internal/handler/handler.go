@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -144,7 +145,7 @@ func (t *handlerTreeNode) add(depth, index int, command []rune, handler CommandH
 	if nextR == 0 {
 		handlerPriority := handler.GetPriority()
 		if t.handler != nil {
-			fmt.Fprintf(os.Stderr, "指令前缀 %s 已被注册，已有的优先级：%d，待注册优先级：%d\n", string(t.command), t.priority, handlerPriority)
+			fmt.Fprintf(os.Stderr, "指令 %s 已被注册，已有的指令 %s 优先级：%d，待注册优先级：%d\n", string(command), string(t.command), t.priority, handlerPriority)
 			if handlerPriority > 0 && (handlerPriority < t.priority || t.priority == 0) {
 				// 如果待注册的handler优先级不为0，且当前handler优先级为0或大于待注册handler（优先级数值越低，优先级越高，但是0为最低优先）
 				log.Printf("待注册的指令处理器 %s 优先级更高，替换已有的处理器\n", string(command))
@@ -222,4 +223,33 @@ func (t *handlerTreeNode) get(command []rune, prefixLength int, macthed matchedH
 	}
 	// 如果在子节点中，在子节点中查找
 	return child.get(command, prefixLength, macthed)
+}
+
+func (t *handlerTreeNode) Json() []byte {
+	if t == nil {
+		return nil
+	}
+	jsonMap := make(map[string]interface{})
+	jsonMap["command"] = t.command
+	jsonMap["priority"] = t.priority
+	jsonMap["depth"] = t.depth
+	if len(t.children) == 0 {
+		jsonMap["children"] = nil
+	} else {
+		childrenMap := make(map[string]json.RawMessage)
+		for k, c := range t.children {
+			childrenMap[string(k)] = c.Json()
+		}
+		jsonMap["children"] = childrenMap
+	}
+	result, err := json.Marshal(jsonMap)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return result
+}
+
+func PrintTree() {
+	message := commandHandlerTree.Json()
+	log.Println(string(message))
 }

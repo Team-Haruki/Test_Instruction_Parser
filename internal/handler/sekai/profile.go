@@ -336,7 +336,7 @@ func (sekaiHandlers) ProfileCreateGuestHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			// TODO: 迁移 create_account + 折叠消息回传逻辑
-			return nil, fmt.Errorf("TODO: 注册游客账号未实现，region=%v", ctx.Region)
+			return nil, fmt.Errorf("TODO: 注册游客账号未实现，region=%v", ctx.region)
 		},
 	}
 }

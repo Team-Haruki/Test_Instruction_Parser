@@ -57,7 +57,7 @@ func (sekaiHandlers) UpdateHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			// TODO: 迁移 RegionMasterDbManager.get(ctx.region).update() 逻辑
-			return nil, fmt.Errorf("TODO: 更新查询未实现，region=%v", ctx.Region)
+			return nil, fmt.Errorf("TODO: 更新查询未实现，region=%v", ctx.region)
 		},
 	}
 }
