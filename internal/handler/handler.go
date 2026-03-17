@@ -31,7 +31,7 @@ func Dispatch(ctx context.Context, event Event) (interface{}, error) {
 		GroupId:     event.GroupId,
 	}
 	matched := MatchCommandHandler(event.Message)
-	if matched.Handler == nil {
+	if matched.Handler == nil || matched.Handler.IsDisabled() {
 		return nil, nil
 	}
 	handlerContext.ArgText = strings.TrimSpace(string(matched.ArgText))
@@ -144,7 +144,7 @@ func (t *handlerTreeNode) add(depth, index int, command []rune, handler CommandH
 	// 如果没有下一个字符，就将handler添加到当前节点
 	if nextR == 0 {
 		handlerPriority := handler.GetPriority()
-		if t.handler != nil {
+		if t.handler != nil && !t.handler.IsDisabled() {
 			fmt.Fprintf(os.Stderr, "指令 %s 已被注册，已有的指令 %s 优先级：%d，待注册优先级：%d\n", string(command), string(t.command), t.priority, handlerPriority)
 			if handlerPriority > 0 && (handlerPriority < t.priority || t.priority == 0) {
 				// 如果待注册的handler优先级不为0，且当前handler优先级为0或大于待注册handler（优先级数值越低，优先级越高，但是0为最低优先）
@@ -186,10 +186,10 @@ type matchedHandler struct {
 // 将指令按字符在指令树中查找
 func (t *handlerTreeNode) get(command []rune, prefixLength int, macthed matchedHandler) matchedHandler {
 	macthedPriority := 0
-	if macthed.Handler != nil {
+	if macthed.Handler != nil && !macthed.Handler.IsDisabled() {
 		macthedPriority = macthed.Handler.GetPriority()
 	}
-	// 如果传入的处理器为空或者优先级不高于当前的handler，将handler替换为当前的（如果有）
+	// 如果传入的处理器优先级为0或者不高于当前的handler，将handler替换为当前的（如果有）
 	if t.handler != nil &&
 		(macthedPriority == 0 ||
 			(t.priority > 0 && t.priority <= macthedPriority)) {
